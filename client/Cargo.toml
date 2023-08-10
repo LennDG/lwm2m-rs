@@ -1,0 +1,9 @@
+[package]
+name = "lwm2m-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+coap = "0.12"
+coap-lite = "0.9.1"
+tokio = { version = "1.29", features = ["full"] }
