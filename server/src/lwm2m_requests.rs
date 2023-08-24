@@ -1,6 +1,6 @@
 use coap_lite::option_value::OptionValueString;
 use coap_lite::CoapOption;
-use coap_server::app::{CoapError, Request, Response};
+use coap_server::app::{CoapError, Request};
 use serde::Deserialize;
 use serde_querystring::from_str;
 use std::net::SocketAddr;
@@ -71,9 +71,9 @@ impl TryFrom<Request<SocketAddr>> for LWM2MRegistrationRequest {
                     match regreq {
                         Err(_) => Err(CoapError {
                             code: Some(coap_lite::ResponseType::UnprocessableEntity),
-                            message: String::from("Incorrect URL query format")
+                            message: String::from("Incorrect URL query format"),
                         }),
-                        Ok(result) => Ok(result)
+                        Ok(result) => Ok(result),
                     }
                 }
             },
