@@ -1,10 +1,13 @@
+#![allow(dead_code, unused_variables)]
+
 use std::net::SocketAddr;
 
 use crate::lwm2m_requests::LWM2MRegistrationRequest;
 use coap_server::app::{CoapError, Request, Response};
 use coap_server::{app, CoapServer, FatalServerError, UdpTransport};
 
-pub mod lwm2m_requests;
+mod lwm2m_requests;
+mod registration;
 
 #[tokio::main]
 async fn main() -> Result<(), FatalServerError> {
@@ -18,12 +21,8 @@ async fn main() -> Result<(), FatalServerError> {
         .await
 }
 async fn handle_register_device(request: Request<SocketAddr>) -> Result<Response, CoapError> {
-    let registration_request = LWM2MRegistrationRequest::try_from(request.clone());
-
-    match registration_request {
-        Err(e) => Err(e),
-        Ok(_) => Ok(request.new_response()),
-    }
+    let registration_request = LWM2MRegistrationRequest::try_from(request.clone())?;
+    Ok(request.new_response())
 }
 async fn handle_get_hello(request: Request<SocketAddr>) -> Result<Response, CoapError> {
     let whom = request
