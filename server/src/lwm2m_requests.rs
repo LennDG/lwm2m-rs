@@ -119,10 +119,10 @@ impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
     }
 }
 
-// TODO: support all different attributes
 #[derive(Debug, Default)]
-pub struct Lwm2mObjects {
-    objects: Vec<String>,
+pub struct Lwm2mObject {
+    object: String, //TODO: this eventually needs to have much more data w.r.t the LWM2M Object Model, for now just a str
+    attributes: Vec<Lwm2mAttribute>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -161,7 +161,7 @@ pub struct Lwm2mRegistrationRequest {
     #[serde(rename = "b")]
     binding_mode: Lwm2mBindMode,
     #[serde(skip)]
-    objects: Lwm2mObjects,
+    objects: Vec<Lwm2mObject>,
 }
 
 impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
@@ -190,17 +190,16 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
             code: Some(coap_lite::ResponseType::UnprocessableEntity),
             message: String::from("Unreadable utf8 content"),
         })?;
-        let objects: Result<Vec<(&str, LinkAttributeParser<'_>)>, ErrorLinkFormat> =
-            parse_link_format(payload_str);
+        let objects = parse_link_format(payload_str)?;
 
         // Check if the content type is application/link-format
         match content_type {
             // If no content-type specified, check if it is valid link-format
             None => {
-                if payload_str.trim().is_empty() || objects.is_err() {
+                if payload_str.trim().is_empty() {
                     return Err(CoapError {
                         code: Some(coap_lite::ResponseType::UnprocessableEntity),
-                        message: String::from("Content type is not valid application/link-format"),
+                        message: String::from("Registration requires objects in payload"),
                     });
                 }
             }
@@ -213,20 +212,6 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
             }
         };
 
-        // Get the payload and convert it into a Lwm2mObjects struct
-        let link_string = String::from_utf8(payload).map_err(|_| CoapError {
-            code: Some(coap_lite::ResponseType::UnprocessableEntity),
-            message: String::from("Unreadable utf8 link-format content"),
-        })?;
-
-        // TODO: discover how to use the link_format parser in coaplite
-        let objects = Lwm2mObjects {
-            objects: link_string
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .collect(),
-        };
-
         // Deserialize the options into a request
         let mut regreq: Lwm2mRegistrationRequest =
             from_str(option.0.as_str(), serde_querystring::ParseMode::UrlEncoded).map_err(
@@ -235,27 +220,49 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
                     message: String::from("Incorrect URL query format"),
                 },
             )?;
-
         regreq.objects = objects;
         Ok(regreq)
     }
 }
 
-impl TryFrom<&str> for Lwm2mObjects {
-    type Error = CoapError;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        todo!()
-    }
-}
-
-fn parse_link_format(payload: &str) -> Result<Vec<(&str, LinkAttributeParser)>, ErrorLinkFormat> {
+fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mObject>, CoapError> {
     let mut parser = LinkFormatParser::new(payload);
 
-    parser.try_fold(vec![], |mut acc, link_result| {
-        link_result.map(|link| {
-            let (link_str, attr_parser) = link;
-            acc.push((link_str, attr_parser));
-            acc
-        })
-    })
+    let objects = parser.try_fold(vec![], |mut acc, link_result| {
+        link_result
+            .map_err(|err| CoapError {
+                code: Some(coap_lite::ResponseType::UnprocessableEntity),
+                message: format! {"{:?}", err},
+            })
+            .and_then(|link| {
+                let (link_str, attr_parser) = link;
+                // Parse attributes for the current link and append to acc
+                let object = parse_attributes(link_str, attr_parser)?;
+                acc.push(object);
+                Ok(acc)
+            })
+    })?;
+
+    Ok(objects)
+}
+
+fn parse_attributes(
+    object: &str,
+    mut attribute_parser: LinkAttributeParser,
+) -> Result<Lwm2mObject, CoapError> {
+    let attributes = attribute_parser.try_fold(
+        vec![],
+        |mut acc, attr| -> Result<Vec<Lwm2mAttribute>, CoapError> {
+            let attribute = Lwm2mAttribute::try_from(attr)?;
+            acc.push(attribute);
+            Ok(acc)
+        },
+    )?;
+
+    let object = Lwm2mObject {
+        object: object.to_owned(),
+        attributes,
+    };
+
+    Ok(object)
 }
