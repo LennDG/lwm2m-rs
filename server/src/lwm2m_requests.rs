@@ -102,14 +102,14 @@ impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
                     code: Some(coap_lite::ResponseType::NotAcceptable),
                     message: format!("Minumum evaluation period {} should be u64", attr_value),
                 })?;
-                Ok(Lwm2mAttribute::MaxPeriod(pmax))
+                Ok(Lwm2mAttribute::MinEvalPeriod(pmax))
             }
             "epmax" => {
                 let pmax = attr_value.parse::<u64>().map_err(|_| CoapError {
                     code: Some(coap_lite::ResponseType::NotAcceptable),
                     message: format!("Maximum evaluation period {} should be u64", attr_value),
                 })?;
-                Ok(Lwm2mAttribute::MaxPeriod(pmax))
+                Ok(Lwm2mAttribute::MaxEvalPeriod(pmax))
             }
             _ => Err(CoapError {
                 code: Some(coap_lite::ResponseType::UnprocessableEntity),
