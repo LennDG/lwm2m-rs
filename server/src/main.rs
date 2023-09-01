@@ -2,7 +2,7 @@
 
 use std::net::SocketAddr;
 
-use crate::lwm2m_requests::LWM2MRegistrationRequest;
+use crate::lwm2m_requests::Lwm2mRegistrationRequest;
 use coap_server::app::{CoapError, Request, Response};
 use coap_server::{app, CoapServer, FatalServerError, UdpTransport};
 
@@ -21,7 +21,7 @@ async fn main() -> Result<(), FatalServerError> {
         .await
 }
 async fn handle_register_device(request: Request<SocketAddr>) -> Result<Response, CoapError> {
-    let registration_request = LWM2MRegistrationRequest::try_from(request.clone())?;
+    let registration_request = Lwm2mRegistrationRequest::try_from(request.clone())?;
     Ok(request.new_response())
 }
 async fn handle_get_hello(request: Request<SocketAddr>) -> Result<Response, CoapError> {
