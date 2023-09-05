@@ -1,11 +1,11 @@
-use coap_lite::link_format::{ErrorLinkFormat, LinkAttributeParser, Unquote};
+use coap_lite::link_format::{LinkAttributeParser, Unquote};
 use coap_lite::CoapOption;
 use coap_lite::{link_format::LinkFormatParser, option_value::OptionValueString};
 use coap_server::app::{CoapError, Request};
 use serde::Deserialize;
 use serde_querystring::from_str;
 use std::net::SocketAddr;
-use std::str::{self, FromStr};
+use std::str::{self};
 
 #[derive(Debug)]
 enum Lwm2mRequest {
@@ -26,6 +26,7 @@ enum Lwm2mAttribute {
     Step(f64),
     MinEvalPeriod(u64),
     MaxEvalPeriod(u64),
+    Unknown(String),
 }
 
 impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
@@ -111,10 +112,7 @@ impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
                 })?;
                 Ok(Lwm2mAttribute::MaxEvalPeriod(pmax))
             }
-            _ => Err(CoapError {
-                code: Some(coap_lite::ResponseType::UnprocessableEntity),
-                message: format!("CoRE attribute {} not recognized", attr_value),
-            }),
+            _ => Ok(Lwm2mAttribute::Unknown(attr_value)),
         }
     }
 }
