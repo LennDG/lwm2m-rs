@@ -7,6 +7,7 @@ use coap_server::app::{CoapError, Request, Response};
 use coap_server::{app, CoapServer, FatalServerError, UdpTransport};
 
 mod lwm2m_requests;
+mod registration;
 
 #[tokio::main]
 async fn main() -> Result<(), FatalServerError> {

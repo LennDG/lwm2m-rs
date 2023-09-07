@@ -16,7 +16,7 @@ pub struct Lwm2mObject {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename = "Lwm2m")]
+#[serde(rename = "lwm2m")]
 pub enum Lwm2mVersion {
     #[serde(alias = "v1.0")]
     #[serde(alias = "1.0")]
