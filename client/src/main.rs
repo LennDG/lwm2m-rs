@@ -18,6 +18,10 @@ fn main() {
 
     let response = CoAPClient::post(url, Vec::new()).unwrap();
     println!("Server reply: {:?}", response.message);
+    println!(
+        "Server payload: {}",
+        String::from_utf8(response.message.payload).unwrap()
+    );
 
     let mut buffer = String::new();
     let mut write = LinkFormatWrite::new(&mut buffer);
@@ -27,6 +31,10 @@ fn main() {
 
     let response = CoAPClient::post(url, buffer.into_bytes()).unwrap();
     println!("Server reply: {:?}", response.message);
+    println!(
+        "Server payload: {}",
+        String::from_utf8(response.message.payload).unwrap()
+    );
 
     let url = "coap://127.0.0.1:5683/rd";
     println!("Client request: {}", url);

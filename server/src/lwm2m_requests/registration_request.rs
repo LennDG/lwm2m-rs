@@ -46,7 +46,7 @@ pub struct Lwm2mRegistrationRequest {
     endpoint: String,
     #[serde(rename = "lt")]
     lifetime: i32,
-    #[serde(rename = "Lwm2m")]
+    #[serde(rename = "lwm2m")]
     version: Lwm2mVersion,
     #[serde(rename = "b")]
     binding_mode: Lwm2mBindMode,
@@ -80,7 +80,6 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
             code: Some(coap_lite::ResponseType::UnprocessableEntity),
             message: String::from("Unreadable utf8 content"),
         })?;
-        let objects = parse_link_format(payload_str)?;
 
         // Check if the content type is application/link-format
         match content_type {
@@ -105,12 +104,13 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
         // Deserialize the options into a request
         let mut regreq: Lwm2mRegistrationRequest =
             from_str(option.0.as_str(), serde_querystring::ParseMode::UrlEncoded).map_err(
-                |_| CoapError {
+                |err| CoapError {
                     code: Some(coap_lite::ResponseType::UnprocessableEntity),
-                    message: String::from("Incorrect URL query format"),
+                    message: format!("Incorrect URL query format: {}", err.message),
                 },
             )?;
-        regreq.objects = objects;
+
+        regreq.objects = parse_link_format(payload_str)?;
         Ok(regreq)
     }
 }
@@ -118,7 +118,7 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
 fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mObject>, CoapError> {
     let mut parser = LinkFormatParser::new(payload);
 
-    let objects = parser.try_fold(vec![], |mut acc, link_result| {
+    parser.try_fold(vec![], |mut acc, link_result| {
         link_result
             .map_err(|err| CoapError {
                 code: Some(coap_lite::ResponseType::UnprocessableEntity),
@@ -131,9 +131,7 @@ fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mObject>, CoapError> {
                 acc.push(object);
                 Ok(acc)
             })
-    })?;
-
-    Ok(objects)
+    })
 }
 
 fn parse_attributes(
