@@ -83,7 +83,8 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
 
         // Check if the content type is application/link-format
         match content_type {
-            // If no content-type specified, check if it is valid link-format
+            // If no content-type specified, check if at least not empty.
+            // Determining correct format is done when the content is parsed
             None => {
                 if payload_str.trim().is_empty() {
                     return Err(CoapError {
