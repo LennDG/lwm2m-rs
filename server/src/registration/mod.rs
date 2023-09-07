@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::lwm2m_requests::registration_request::Lwm2mVersion;
 
 pub struct Lwm2mRegistration {}
@@ -8,10 +10,10 @@ pub struct Model {
 
 pub struct Object {
     id: u16,
+    instances: HashMap<u64, ObjectInstance>,
     mandatory: bool,
     name: String,
     description: String,
-    instances: Vec<ObjectInstance>,
     version: String,
     lwm2m_version: Lwm2mVersion,
     urn: String,
@@ -24,7 +26,7 @@ pub struct ObjectInstance {
 
 pub struct Resource {
     id: u16,
-    instances: Vec<ResourceInstance>,
+    instances: HashMap<u64, ResourceInstance>,
     mandatory: bool,
     name: String,
     description: String,
