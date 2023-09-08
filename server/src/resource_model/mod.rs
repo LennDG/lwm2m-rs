@@ -18,7 +18,6 @@ pub struct Object {
 }
 
 pub struct ObjectInstance {
-    instance_id: u16,
     resources: Vec<Resource>,
 }
 
@@ -35,8 +34,7 @@ pub struct Resource {
 }
 
 pub struct ResourceInstance {
-    instance_id: u16,
-    value: ResourceType,
+    value: Option<ResourceType>,
 }
 
 pub enum ResourceOperation {
