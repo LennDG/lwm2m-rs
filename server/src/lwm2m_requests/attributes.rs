@@ -20,6 +20,7 @@ pub enum Lwm2mAttribute {
     Edge(bool),
     Confirmable(bool),
     MaxHistoricalQueue(u64),
+    ContentType(coap_lite::ContentFormat),
     Unknown(String),
 }
 
@@ -63,6 +64,17 @@ impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
                 Lwm2mAttribute::Confirmable(false),
             ),
             "hqmax" => parse_u64_attribute(attr, attr_value, "Maximum Historical Queue"),
+            "ct" => {
+                let ct = attr_value.parse::<usize>().map_err(|_| CoapError {
+                    code: Some(coap_lite::ResponseType::NotAcceptable),
+                    message: String::from("ct value should be an integer"),
+                })?;
+                let cf = coap_lite::ContentFormat::try_from(ct).map_err(|_| CoapError {
+                    code: Some(coap_lite::ResponseType::NotAcceptable),
+                    message: format!("ct value {} not recognized as content format", ct),
+                })?;
+                Ok(Lwm2mAttribute::ContentType(cf))
+            }
             _ => Ok(Lwm2mAttribute::Unknown(attr_value)),
         }
     }

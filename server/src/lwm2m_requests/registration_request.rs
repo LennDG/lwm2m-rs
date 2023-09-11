@@ -43,15 +43,15 @@ pub enum Lwm2mBindMode {
 #[derive(Debug, Deserialize)]
 pub struct Lwm2mRegistrationRequest {
     #[serde(rename = "ep")]
-    endpoint: String,
+    pub endpoint: String,
     #[serde(rename = "lt")]
-    lifetime: i32,
+    pub lifetime: u64,
     #[serde(rename = "lwm2m")]
-    version: Lwm2mVersion,
+    pub version: Lwm2mVersion,
     #[serde(rename = "b")]
-    binding_mode: Lwm2mBindMode,
+    pub binding_mode: Lwm2mBindMode,
     #[serde(skip)]
-    objects: Vec<Lwm2mObject>,
+    pub objects: Vec<Lwm2mObject>,
 }
 
 impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {

@@ -6,8 +6,8 @@ use crate::lwm2m_requests::registration_request::Lwm2mRegistrationRequest;
 use coap_server::app::{CoapError, Request, Response};
 use coap_server::{app, CoapServer, FatalServerError, UdpTransport};
 
+mod device;
 mod lwm2m_requests;
-mod registration;
 
 #[tokio::main]
 async fn main() -> Result<(), FatalServerError> {
