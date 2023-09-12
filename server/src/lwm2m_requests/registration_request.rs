@@ -10,7 +10,7 @@ use std::str::{self};
 use super::attributes::Lwm2mAttribute;
 
 #[derive(Debug, Default)]
-pub struct Lwm2mObject {
+pub struct Lwm2mRegistrationObject {
     object: String, //TODO: this eventually needs to have much more data w.r.t the LWM2M Object Model, for now just a str
     attributes: Vec<Lwm2mAttribute>,
 }
@@ -51,7 +51,7 @@ pub struct Lwm2mRegistrationRequest {
     #[serde(rename = "b")]
     pub binding_mode: Lwm2mBindMode,
     #[serde(skip)]
-    pub objects: Vec<Lwm2mObject>,
+    pub objects: Vec<Lwm2mRegistrationObject>,
 }
 
 impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
@@ -116,7 +116,7 @@ impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
     }
 }
 
-fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mObject>, CoapError> {
+fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mRegistrationObject>, CoapError> {
     let mut parser = LinkFormatParser::new(payload);
 
     parser.try_fold(vec![], |mut acc, link_result| {
@@ -138,7 +138,7 @@ fn parse_link_format(payload: &str) -> Result<Vec<Lwm2mObject>, CoapError> {
 fn parse_attributes(
     object_name: &str,
     mut attribute_parser: LinkAttributeParser,
-) -> Result<Lwm2mObject, CoapError> {
+) -> Result<Lwm2mRegistrationObject, CoapError> {
     let attributes = attribute_parser.try_fold(
         vec![],
         |mut acc, attr| -> Result<Vec<Lwm2mAttribute>, CoapError> {
@@ -148,7 +148,7 @@ fn parse_attributes(
         },
     )?;
 
-    Ok(Lwm2mObject {
+    Ok(Lwm2mRegistrationObject {
         object: object_name.to_owned(),
         attributes,
     })

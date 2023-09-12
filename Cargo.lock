@@ -437,6 +437,7 @@ version = "0.1.0"
 dependencies = [
  "coap-lite",
  "coap-server",
+ "rand",
  "serde",
  "serde-querystring",
  "serde_plain",
