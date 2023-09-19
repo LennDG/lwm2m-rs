@@ -54,10 +54,8 @@ pub struct Lwm2mRegistrationRequest {
     pub objects: Vec<Lwm2mRegistrationObject>,
 }
 
-impl TryFrom<Request<SocketAddr>> for Lwm2mRegistrationRequest {
-    type Error = CoapError;
-
-    fn try_from(request: Request<SocketAddr>) -> Result<Self, Self::Error> {
+impl Lwm2mRegistrationRequest {
+    pub fn new(request: Request<SocketAddr>) -> Result<Self, CoapError> {
         // Get the URL query parameters
         let options = request
             .original
@@ -142,7 +140,7 @@ fn parse_attributes(
     let attributes = attribute_parser.try_fold(
         vec![],
         |mut acc, attr| -> Result<Vec<Lwm2mAttribute>, CoapError> {
-            let attribute = Lwm2mAttribute::try_from(attr)?;
+            let attribute = Lwm2mAttribute::new(attr)?;
             acc.push(attribute);
             Ok(acc)
         },

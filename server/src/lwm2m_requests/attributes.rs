@@ -25,10 +25,8 @@ pub enum Lwm2mAttribute {
 }
 
 // This type comes from the LinkAttributeParser when it is consumed.
-impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
-    type Error = CoapError;
-
-    fn try_from(value: (&str, Unquote)) -> Result<Self, Self::Error> {
+impl Lwm2mAttribute {
+    pub fn new(value: (&str, Unquote)) -> Result<Self, CoapError> {
         let (attr, u) = value;
         let attr_value = u.to_string();
         match attr {
@@ -39,7 +37,7 @@ impl TryFrom<(&str, Unquote<'_>)> for Lwm2mAttribute {
             "lwm2m" => serde_plain::from_str(attr_value.as_str())
                 .map(|parsed_value| Ok(Lwm2mAttribute::Lwm2mVersion(parsed_value)))
                 .unwrap_or_else(|_| {
-                    Err(Self::Error {
+                    Err(CoapError {
                         code: Some(coap_lite::ResponseType::NotAcceptable),
                         message: format!("LWM2M Version {} is not supported.", attr_value),
                     })

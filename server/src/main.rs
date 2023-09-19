@@ -21,7 +21,7 @@ async fn main() -> Result<(), FatalServerError> {
         .await
 }
 async fn handle_register_device(request: Request<SocketAddr>) -> Result<Response, CoapError> {
-    let registration_request = Lwm2mRegistrationRequest::try_from(request.clone())?;
+    let registration_request = Lwm2mRegistrationRequest::new(request.clone())?;
     Ok(request.new_response())
 }
 async fn handle_get_hello(request: Request<SocketAddr>) -> Result<Response, CoapError> {
