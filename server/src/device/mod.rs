@@ -1,6 +1,7 @@
+use chrono::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 mod registration_tracker;
 
@@ -10,18 +11,18 @@ use crate::lwm2m_requests::registration_request::{
 
 pub struct Device {
     model: DeviceModel,
-    endpoint: String,
+    device_endpoint: String,
     server_endpoint: String,
     lifetime: Duration,
-    last_seen: SystemTime,
+    last_seen: DateTime<Utc>,
 }
 
 impl Device {
     pub fn new(new_reg: Lwm2mRegistrationRequest) -> Self {
         Self {
-            last_seen: SystemTime::now(),
+            last_seen: Utc::now(),
             model: DeviceModel::new(new_reg.objects),
-            endpoint: new_reg.endpoint,
+            device_endpoint: new_reg.device_endpoint,
             lifetime: Duration::from_secs(new_reg.lifetime),
             server_endpoint: Self::new_endpoint(),
         }
@@ -32,7 +33,7 @@ impl Device {
         // This gets us e35 possible strings so the chances for collisions are VERY low.
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
-            .take(20)
+            .take(32)
             .map(char::from)
             .collect()
     }

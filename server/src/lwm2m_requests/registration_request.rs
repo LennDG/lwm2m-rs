@@ -43,7 +43,7 @@ pub enum Lwm2mBindMode {
 #[derive(Debug, Deserialize)]
 pub struct Lwm2mRegistrationRequest {
     #[serde(rename = "ep")]
-    pub endpoint: String,
+    pub device_endpoint: String,
     #[serde(rename = "lt")]
     pub lifetime: u64,
     #[serde(rename = "lwm2m")]
