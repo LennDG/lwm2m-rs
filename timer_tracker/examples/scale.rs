@@ -1,20 +1,17 @@
-use futures::stream::poll_immediate;
 use rand::{distributions::Alphanumeric, Rng};
 use std::time::Duration;
-use timer_tracker::tracker;
-use tokio::{
-    sync::{broadcast, mpsc},
-    time::{self},
-};
+use timer_tracker::TimerTracker;
+use tokio::time::{self};
 
 #[tokio::main]
 async fn main() {
     // timer sender and receivers
-    let (timer_add_tx, timer_add_rx) = mpsc::channel::<(String, Duration)>(1024);
-    let (timeout_tx, mut timeout_rx) = broadcast::channel(1024);
+    let tracker: TimerTracker = Default::default();
 
-    let (_, _, _) = tokio::join!(
-        tracker(timer_add_rx, timeout_tx),
+    let timer_add_tx = tracker.register();
+    let mut timeout_rx = tracker.subscribe();
+
+    let (_, _) = tokio::join!(
         async move {
             for i in 0..1000000 {
                 let name = rand::thread_rng()
@@ -23,7 +20,7 @@ async fn main() {
                     .map(char::from)
                     .collect::<String>();
 
-                let duration = Duration::from_millis(rand::thread_rng().gen_range(20_000..30_000));
+                let duration = Duration::from_millis(rand::thread_rng().gen_range(1_000..30_000));
 
                 timer_add_tx.send((name, duration)).await.unwrap();
 
@@ -43,13 +40,17 @@ async fn main() {
                 match timeout_result {
                     Ok(name) => {
                         timer_amount += 1;
-                        //println!("Timer {} timed out: {}", name, timer_amount);
+                        println!("Timer {} timed out: {}", name, timer_amount);
                     }
-                    Err(_) => break,
+                    Err(err) => {
+                        use tokio::sync::broadcast::error::RecvError;
+                        match err {
+                            RecvError::Closed => break,
+                            RecvError::Lagged(_) => continue,
+                        }
+                    }
                 }
             }
-
-            println!("All timed out! {}", timer_amount)
         }
     );
 }

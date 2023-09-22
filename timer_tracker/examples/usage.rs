@@ -1,5 +1,5 @@
 use std::time::Duration;
-use timer_tracker::tracker;
+use timer_tracker::TimerTracker;
 use tokio::{
     sync::{broadcast, mpsc},
     time::{self},
@@ -8,10 +8,11 @@ use tokio::{
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // timer sender and receivers
-    let (timer_add_tx, timer_add_rx) = mpsc::channel(10);
-    let (timeout_tx, mut timeout_rx) = broadcast::channel(1024);
-    let (_, res1, _) = tokio::join!(
-        tracker(timer_add_rx, timeout_tx),
+    let tracker: TimerTracker = Default::default();
+    let timer_add_tx = tracker.register();
+    let mut timeout_rx = tracker.subscribe();
+
+    let (res1, _) = tokio::join!(
         async move {
             timer_add_tx
                 .send(("Foo".to_string(), Duration::from_secs(1)))

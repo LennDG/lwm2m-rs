@@ -2,9 +2,50 @@ use futures::{stream::FusedStream, StreamExt};
 use std::{collections::HashMap, time::Duration};
 use tokio::{sync::broadcast, sync::mpsc, time};
 
-pub async fn tracker(
+pub struct TimerTracker {
+    timers_tx: mpsc::Sender<(String, Duration)>,
+    //timers_rx: mpsc::Receiver<(String, Duration)>,
+    timeout_tx: broadcast::Sender<String>,
+}
+
+impl TimerTracker {
+    pub fn new() -> Self {
+        let capacity = 1024;
+
+        let (timers_tx, timers_rx) = mpsc::channel(2048);
+        let (timeout_tx, _) = broadcast::channel(capacity);
+
+        let thread_timeout_tx = timeout_tx.clone();
+        tokio::spawn(async move {
+            tracker(timers_rx, thread_timeout_tx, capacity).await;
+        });
+
+        TimerTracker {
+            timers_tx,
+            //timers_rx,
+            timeout_tx,
+        }
+    }
+
+    pub fn subscribe(&self) -> broadcast::Receiver<String> {
+        self.timeout_tx.subscribe()
+    }
+
+    pub fn register(&self) -> mpsc::Sender<(String, Duration)> {
+        self.timers_tx.clone()
+    }
+}
+
+impl Default for TimerTracker {
+    fn default() -> Self {
+        TimerTracker::new()
+    }
+}
+
+async fn tracker(
     mut timers_rx: mpsc::Receiver<(String, Duration)>,
     timeout_tx: broadcast::Sender<String>,
+    capacity: usize,
 ) {
     let mut registered_timers = HashMap::new();
     let mut timers_futures = futures::stream::FuturesUnordered::new();
@@ -28,6 +69,10 @@ pub async fn tracker(
             }
             Some(future_result) = timers_futures.next(), if !timers_futures.is_terminated() => {
                 if let Ok(name) = future_result {
+                    //Only send a message when the channel is not full
+                    while timeout_tx.len() >= capacity {
+                        time::sleep(Duration::from_millis(1)).await;
+                    };
                     let _ = timeout_tx.send(name);
                 }
             },
