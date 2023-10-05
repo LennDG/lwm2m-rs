@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 derive_builder = "0.12.0"
 roxmltree = "0.18.0"
+color-eyre = "0.6"

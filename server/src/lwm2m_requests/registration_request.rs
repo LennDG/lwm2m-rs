@@ -61,7 +61,7 @@ impl Lwm2mRegistrationRequest {
             .original
             .message
             .get_first_option_as::<OptionValueString>(CoapOption::UriQuery)
-            .ok_or_else(|| CoapError {
+            .ok_or(CoapError {
                 code: Some(coap_lite::ResponseType::BadOption),
                 message: String::from("Missing all URL query parameters"),
             })?;

@@ -1,30 +1,71 @@
-use std::collections::HashMap;
-
+#![allow(dead_code, unused_variables)]
 use roxmltree::{Document, Node};
+use std::{collections::HashMap, error::Error, fmt};
+
+#[derive(Debug)]
+struct ObjectParserError {
+    message: String,
+}
+
+impl ObjectParserError {
+    fn new(message: &str) -> Self {
+        ObjectParserError {
+            message: message.to_owned(),
+        }
+    }
+}
+
+impl fmt::Display for ObjectParserError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl Error for ObjectParserError {}
 
 pub fn parse_model() {
+    let object_model = ObjectModelBuilder::default();
     let txt = std::fs::read_to_string("examples/3-1_0.xml").unwrap();
     let doc = Document::parse(txt.as_str()).unwrap();
     if let Some(object_node) = doc
         .descendants()
         .find(|node| node.tag_name().name() == "Object")
     {
-        parse_object(object_node);
+        parse_object(object_node, object_model);
     }
 }
 
-fn parse_object(object_node: Node) {
-    object_node
-        .children()
-        .for_each(|child| println!("{:?}", child.tag_name().name()))
+fn parse_object(
+    object_node: Node,
+    mut object_model: ObjectModelBuilder,
+) -> Result<ObjectModel, ObjectParserError> {
+    for child in object_node.children() {
+        let tag_name = child.tag_name().name();
+        match tag_name {
+            "Name" => match child.text() {
+                Some(value) => Ok(object_model.name(value.to_owned())),
+                None => Err(ObjectParserError::new("No name found")),
+            },
+            "Description1" => match child.text() {
+                Some(value) => Ok(object_model.description(value.to_owned())),
+                None => Ok(&mut object_model),
+            },
+            _ => Ok(&mut object_model),
+        }?;
+    }
+    object_model
+        .build()
+        .map_err(|err| ObjectParserError::new(err.to_string().as_str()))
 }
 
+// Derive builder: https://docs.rs/derive_builder/latest/derive_builder/
 #[derive(Debug, derive_builder::Builder)]
 pub struct ObjectModel {
     id: u16,
     mandatory: bool,
     name: String,
     description: String,
+    description2: String,
     version: String,
     lwm2m_version: String,
     urn: String,
@@ -33,7 +74,7 @@ pub struct ObjectModel {
     resources: HashMap<u64, ResourceModel>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, derive_builder::Builder)]
 pub struct ResourceModel {
     id: u16,
     mandatory: bool,
