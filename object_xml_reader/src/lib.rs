@@ -33,7 +33,7 @@ pub struct ObjectModel {
     resources: HashMap<u64, ResourceModel>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResourceModel {
     id: u16,
     mandatory: bool,
@@ -72,7 +72,7 @@ pub enum ResourceType {
     CoreLink(Option<String>),
     None, // In case of Execute operation
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ResourceRange {
     Numerical(u64, u64),         //start..end  or start-end INCLUSIVE
     NumericalDiscrete(Vec<u64>), //a,b,c, ...
