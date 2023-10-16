@@ -1,27 +1,9 @@
 #![allow(dead_code, unused_variables)]
+use err::ObjectParserError;
 use roxmltree::{Document, Node};
 use std::{collections::HashMap, error::Error, fmt};
 
-#[derive(Debug)]
-struct ObjectParserError {
-    message: String,
-}
-
-impl ObjectParserError {
-    fn new(message: &str) -> Self {
-        ObjectParserError {
-            message: message.to_owned(),
-        }
-    }
-}
-
-impl fmt::Display for ObjectParserError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for ObjectParserError {}
+mod err;
 
 pub fn parse_model() {
     let object_model = ObjectModelBuilder::default();
@@ -31,7 +13,8 @@ pub fn parse_model() {
         .descendants()
         .find(|node| node.tag_name().name() == "Object")
     {
-        parse_object(object_node, object_model);
+        let parsed_object: ObjectModel = parse_object(object_node, object_model).unwrap();
+        println!("Parsed object: {:?}", parsed_object)
     }
 }
 
@@ -40,8 +23,7 @@ fn parse_object(
     mut object_model: ObjectModelBuilder,
 ) -> Result<ObjectModel, ObjectParserError> {
     for child in object_node.children() {
-        let tag_name = child.tag_name().name();
-        match tag_name {
+        match child.tag_name().name() {
             "Name" => match child.text() {
                 Some(value) => Ok(object_model.name(value.to_owned())),
                 None => Err(ObjectParserError::new("No name found")),
@@ -49,6 +31,53 @@ fn parse_object(
             "Description1" => match child.text() {
                 Some(value) => Ok(object_model.description(value.to_owned())),
                 None => Ok(&mut object_model),
+            },
+            "Description2" => match child.text() {
+                Some(value) => Ok(object_model.description2(value.to_owned())),
+                None => Ok(&mut object_model),
+            },
+            "ObjectID" => match child.text() {
+                Some(value) => value
+                    .parse()
+                    .map_err(|_| ObjectParserError::new("Error parsing ObjectID"))
+                    .map(|value| object_model.id(value)),
+                None => Err(ObjectParserError::new("No ObjectID found")),
+            },
+            "ObjectURN" => match child.text() {
+                Some(value) => Ok(object_model.urn(value.to_owned())),
+                None => Ok(&mut object_model),
+            },
+            "LWM2MVersion" => match child.text() {
+                Some(value) => Ok(object_model.lwm2m_version(Some(value.to_owned()))),
+                None => Ok(&mut object_model),
+            },
+            "ObjectVersion" => match child.text() {
+                Some(value) => Ok(object_model.version(Some(value.to_owned()))),
+                None => Ok(&mut object_model),
+            },
+            "MultipleInstances" => match child.text() {
+                Some("Multiple") => Ok(object_model.multiple(MultipleInstances::Multiple)),
+                Some("Single") => Ok(object_model.multiple(MultipleInstances::Single)),
+                Some(value) => Err(ObjectParserError::new(
+                    format!(
+                        "MultipleInstances needs to be Multiple or Single, is: {}",
+                        value
+                    )
+                    .as_str(),
+                )),
+                None => Err(ObjectParserError::new(
+                    "MultipleInstances needs to be Multiple or Single, is empty",
+                )),
+            },
+            "Mandatory" => match child.text() {
+                Some("Mandatory") => Ok(object_model.mandatory(true)),
+                Some("Optional") => Ok(object_model.mandatory(false)),
+                Some(value) => Err(ObjectParserError::new(
+                    format!("Mandatory needs to be Mandatory or Optional, is: {}", value).as_str(),
+                )),
+                None => Err(ObjectParserError::new(
+                    "Mandatory needs to be Mandatory or Optional, is empty",
+                )),
             },
             _ => Ok(&mut object_model),
         }?;
@@ -64,10 +93,14 @@ pub struct ObjectModel {
     id: u16,
     mandatory: bool,
     name: String,
+    #[builder(default = "String::new()")]
     description: String,
+    #[builder(default = "String::new()")]
     description2: String,
-    version: String,
-    lwm2m_version: String,
+    #[builder(default = "None")]
+    version: Option<String>,
+    #[builder(default = "None")]
+    lwm2m_version: Option<String>,
     urn: String,
     multiple: MultipleInstances,
     #[builder(field(type = "HashMap<u64, ResourceModel>", build = "HashMap::new()"))]
