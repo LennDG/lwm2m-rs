@@ -2,10 +2,46 @@
 use err::ObjectParserError;
 use roxmltree::{Document, Node};
 use std::{collections::HashMap, path::PathBuf};
+use walkdir::WalkDir;
 
 mod err;
 
-pub fn parse_model(filepath: &PathBuf) {
+pub fn get_models_from_dir(
+    filepath: &PathBuf,
+) -> Result<HashMap<u16, ObjectModel>, ObjectParserError> {
+    if filepath.is_dir() {
+        WalkDir::new(filepath)
+            .into_iter()
+            .filter_map(|entry| {
+                let entry = entry.unwrap();
+                let file_name = entry.file_name().to_string_lossy().to_string();
+                if entry.file_type().is_file()
+                    && file_name.ends_with(".xml")
+                    && file_name
+                        .strip_suffix(".xml")
+                        .unwrap() //can unwrap because previous condition checks for .xml
+                        .chars()
+                        .all(char::is_numeric)
+                {
+                    Some(entry.path().to_owned())
+                } else {
+                    None
+                }
+            })
+            .try_fold(
+                HashMap::new(),
+                |mut acc, file| -> Result<HashMap<u16, ObjectModel>, ObjectParserError> {
+                    let model = parse_model(&file)?;
+                    acc.insert(model.id, model);
+                    Ok(acc)
+                },
+            )
+    } else {
+        Err(ObjectParserError::new("Path is not a directory"))
+    }
+}
+
+fn parse_model(filepath: &PathBuf) -> Result<ObjectModel, ObjectParserError> {
     let object_model = ObjectModelBuilder::default();
     let txt = std::fs::read_to_string(filepath).unwrap();
     let doc = Document::parse(txt.as_str()).unwrap();
@@ -13,8 +49,9 @@ pub fn parse_model(filepath: &PathBuf) {
         .descendants()
         .find(|node| node.tag_name().name() == "Object")
     {
-        let parsed_object: ObjectModel = parse_object(object_node, object_model).unwrap();
-        println!("Parsed object: {:?}", parsed_object)
+        parse_object(object_node, object_model)
+    } else {
+        Err(ObjectParserError::new("No Object found in file"))
     }
 }
 
@@ -262,35 +299,12 @@ pub enum ResourceRange {
 
 #[cfg(test)]
 mod tests {
-    use walkdir::WalkDir;
+    use std::path::PathBuf;
 
     #[test]
     fn parse_all() {
         let directory_path = "/home/lenndg/projects/lwm2m-registry";
-
-        let xml_files: Vec<_> = WalkDir::new(directory_path)
-            .into_iter()
-            .filter_map(|entry| {
-                let entry = entry.unwrap();
-                let file_name = entry.file_name().to_string_lossy().to_string();
-                if entry.file_type().is_file()
-                    && file_name.ends_with(".xml")
-                    && file_name
-                        .strip_suffix(".xml")
-                        .unwrap()
-                        .chars()
-                        .all(char::is_numeric)
-                {
-                    Some(entry.path().to_owned())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        for xml_file in &xml_files {
-            println!("Testing object file: {:?}", xml_file);
-            super::parse_model(xml_file)
-        }
+        let result = super::get_models_from_dir(&PathBuf::from(directory_path));
+        assert!(result.is_ok())
     }
 }
