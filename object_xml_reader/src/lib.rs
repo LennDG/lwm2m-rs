@@ -4,7 +4,7 @@ use roxmltree::{Document, Node};
 use std::{collections::HashMap, fmt, path::PathBuf};
 use walkdir::WalkDir;
 
-mod displaytraits;
+mod display;
 mod err;
 
 pub fn get_models_from_dir(
