@@ -1,9 +1,10 @@
 #![allow(dead_code, unused_variables)]
 use err::ObjectParserError;
 use roxmltree::{Document, Node};
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fmt, path::PathBuf};
 use walkdir::WalkDir;
 
+mod displaytraits;
 mod err;
 
 pub fn get_models_from_dir(
@@ -266,7 +267,7 @@ pub struct ResourceModel {
     multiple: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ResourceOperation {
     Read,
     Write,
@@ -286,6 +287,7 @@ pub enum ResourceType {
     Time(Option<u64>),          // In case of Execute operation
     CoreLink(Option<String>),
 }
+
 #[derive(Debug, Clone)]
 pub enum ResourceRange {
     Numerical(i64, i64),         //start..end  or start-end INCLUSIVE
@@ -303,8 +305,12 @@ mod tests {
 
     #[test]
     fn parse_all() {
-        let directory_path = "/home/lenndg/projects/lwm2m-registry";
+        let directory_path = "lwm2m-registry";
         let result = super::get_models_from_dir(&PathBuf::from(directory_path));
-        assert!(result.is_ok())
+        //println!("{:?}", result);
+        assert!(result.is_ok());
+        for (key, value) in result.unwrap() {
+            println!("{}", value);
+        }
     }
 }
