@@ -4,5 +4,5 @@ members = [
     "server",
     "client",
     "timer_tracker",
-    "object_xml_reader",
+    "object_model",
 ]

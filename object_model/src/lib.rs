@@ -292,9 +292,8 @@ pub enum ResourceType {
 pub enum ResourceRange {
     Numerical(i64, i64),         //start..end  or start-end INCLUSIVE
     NumericalDiscrete(Vec<i64>), //a,b,c, ...
-    ByteLength(u64, u64),        //min..max bytes
-    ByteDiscrete(Vec<u64>),      //specific byte lengths
-    StringLength(u64, u64),      //min..max string bytes
+    DiscreteLength(Vec<u64>),    //specific byte lengths
+    Length(u64, u64),            //min..max string bytes
     StringEnum(Vec<String>),     //Possible values for the string
     Other(String),               //If enumeration is not able to be determined
 }
@@ -307,10 +306,9 @@ mod tests {
     fn parse_all() {
         let directory_path = "lwm2m-registry";
         let result = super::get_models_from_dir(&PathBuf::from(directory_path));
-        //println!("{:?}", result);
         assert!(result.is_ok());
-        for (key, value) in result.unwrap() {
-            println!("{}", value);
-        }
+        // for (key, value) in result.unwrap() {
+        //     println!("{}", value);
+        // }
     }
 }

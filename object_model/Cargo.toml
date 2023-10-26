@@ -1,9 +1,12 @@
 [package]
-name = "object-xml-reader"
+name = "object_model"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "object_model"
 
 [dependencies]
 derive_builder = "0.12.0"
