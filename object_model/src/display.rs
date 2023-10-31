@@ -22,15 +22,9 @@ impl fmt::Display for crate::ObjectModel {
             Some(v) => v,
         };
 
-        let object_version = match self.version.clone() {
-            None => "1.0".to_string(),
-            Some(v) => v,
-        };
+        let object_version = self.version.clone();
 
-        let lwm2m_version = match self.version.clone() {
-            None => "latest".to_string(),
-            Some(v) => v,
-        };
+        let lwm2m_version = self.version.clone();
 
         let mut resources = "".to_string();
         for (key, value) in self.resources.clone() {
@@ -140,6 +134,12 @@ impl fmt::Display for crate::ResourceType {
 impl fmt::Display for crate::ResourceRange {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for crate::Version {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.oma_version)
     }
 }
 

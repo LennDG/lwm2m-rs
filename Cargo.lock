@@ -589,6 +589,7 @@ dependencies = [
  "chrono",
  "coap-lite",
  "coap-server",
+ "object_model",
  "rand",
  "serde",
  "serde-querystring",
@@ -667,6 +668,7 @@ name = "object_model"
 version = "0.1.0"
 dependencies = [
  "derive_builder",
+ "regex",
  "roxmltree",
  "walkdir",
 ]

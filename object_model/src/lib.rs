@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use err::ObjectParserError;
 use roxmltree::{Document, Node};
-use std::{collections::HashMap, fmt, path::PathBuf};
+use std::{collections::HashMap, hash::Hash, path::PathBuf};
 use walkdir::WalkDir;
 
 mod display;
@@ -9,7 +9,7 @@ mod err;
 
 pub fn get_models_from_dir(
     filepath: &PathBuf,
-) -> Result<HashMap<u16, ObjectModel>, ObjectParserError> {
+) -> Result<HashMap<u16, ObjectModelVersions>, ObjectParserError> {
     if filepath.is_dir() {
         WalkDir::new(filepath)
             .into_iter()
@@ -32,9 +32,23 @@ pub fn get_models_from_dir(
             })
             .try_fold(
                 HashMap::new(),
-                |mut acc, file| -> Result<HashMap<u16, ObjectModel>, ObjectParserError> {
+                |mut acc, file| -> Result<HashMap<u16, ObjectModelVersions>, ObjectParserError> {
                     let model = parse_model(&file)?;
-                    acc.insert(model.id, model);
+                    match acc.get_mut(&model.id) {
+                        Some(object_model_versions) => {
+                            object_model_versions
+                                .versions
+                                .insert(model.version.clone(), model);
+                        }
+                        None => {
+                            acc.insert(
+                                model.id,
+                                ObjectModelVersions {
+                                    versions: HashMap::from([(model.version.clone(), model)]),
+                                },
+                            );
+                        }
+                    };
                     Ok(acc)
                 },
             )
@@ -87,11 +101,15 @@ fn parse_object(
                 None => Ok(&mut object_model),
             },
             "LWM2MVersion" => match child.text() {
-                Some(value) => Ok(object_model.lwm2m_version(Some(value.to_owned()))),
+                Some(value) => {
+                    Version::try_from(value).map(|version| object_model.lwm2m_version(version))
+                }
                 None => Ok(&mut object_model),
             },
             "ObjectVersion" => match child.text() {
-                Some(value) => Ok(object_model.version(Some(value.to_owned()))),
+                Some(value) => {
+                    Version::try_from(value).map(|version| object_model.version(version))
+                }
                 None => Ok(&mut object_model),
             },
             "MultipleInstances" => match child.text() {
@@ -231,7 +249,7 @@ fn parse_range_enumeration(enumeration: &str) -> ResourceRange {
 }
 
 // Derive builder: https://docs.rs/derive_builder/latest/derive_builder/
-#[derive(Debug, derive_builder::Builder)]
+#[derive(Debug, derive_builder::Builder, Clone)]
 pub struct ObjectModel {
     id: u16,
     mandatory: bool,
@@ -240,10 +258,10 @@ pub struct ObjectModel {
     description: Option<String>,
     #[builder(default = "None")]
     description2: Option<String>,
-    #[builder(default = "None")]
-    version: Option<String>,
-    #[builder(default = "None")]
-    lwm2m_version: Option<String>,
+    #[builder(default = "Default::default()")]
+    version: Version,
+    #[builder(default = "Default::default()")]
+    lwm2m_version: Version,
     urn: String,
     multiple: bool,
     #[builder(default = "HashMap::new()")]
@@ -299,21 +317,57 @@ pub enum ResourceRange {
     Other(String),               //If enumeration is not able to be determined
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Version {
+    oma_version: String,
+}
+
+impl TryFrom<&str> for Version {
+    type Error = ObjectParserError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        use regex::Regex;
+        let re = Regex::new(r"^[0-9]\.[0-9]$").unwrap();
+        if re.is_match(value) {
+            Ok(Version {
+                oma_version: value.to_owned(),
+            })
+        } else {
+            Err(ObjectParserError::new(
+                "Version is not in format DIGIT.DIGIT",
+            ))
+        }
+    }
+}
+impl Default for Version {
+    fn default() -> Self {
+        Self {
+            oma_version: String::from("1.0"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ObjectModelVersions {
+    versions: HashMap<Version, ObjectModel>,
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
     #[test]
     fn parse_all() {
-        let directory_path = "lwm2m-registry";
-        let result = super::get_models_from_dir(&PathBuf::from(directory_path));
-        assert!(result.is_ok());
-
         let directory_path = "lwm2m-registry/version_history";
         let result = super::get_models_from_dir(&PathBuf::from(directory_path));
         assert!(result.is_ok());
-        // for (key, value) in result.unwrap() {
-        //     println!("{}", value);
-        // }
+        for (key, value) in result.unwrap() {
+            if value.versions.keys().len() > 1 {
+                for (version, model) in value.versions {
+                    println!("{}", version);
+                    println!("{}", model);
+                }
+            }
+        }
     }
 }
