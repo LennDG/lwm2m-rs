@@ -7,6 +7,13 @@ use walkdir::WalkDir;
 mod display;
 mod err;
 
+/// Returns a hashmap with objectmodels sorted by IDs and versions. Will return an error if a single object fails
+/// This function is meant for well known models (e.g. from the lwm2m registry) that strictly follow the xsd.
+/// Use ... for user provided models.
+///
+/// # Arguments
+///
+/// * `filepath` - A &PathBuf to the directory the models reside in
 pub fn get_models_from_dir(
     filepath: &PathBuf,
 ) -> Result<HashMap<u16, ObjectModelVersions>, ObjectParserError> {
