@@ -4,7 +4,6 @@ use tokio::{sync::broadcast, sync::mpsc, time};
 
 pub struct TimerTracker {
     timers_tx: mpsc::Sender<(String, Duration)>,
-    //timers_rx: mpsc::Receiver<(String, Duration)>,
     timeout_tx: broadcast::Sender<String>,
 }
 
@@ -12,7 +11,7 @@ impl TimerTracker {
     pub fn new() -> Self {
         let capacity = 1024;
 
-        let (timers_tx, timers_rx) = mpsc::channel(2048);
+        let (timers_tx, timers_rx) = mpsc::channel(capacity);
         let (timeout_tx, _) = broadcast::channel(capacity);
 
         let thread_timeout_tx = timeout_tx.clone();
@@ -22,7 +21,6 @@ impl TimerTracker {
 
         TimerTracker {
             timers_tx,
-            //timers_rx,
             timeout_tx,
         }
     }

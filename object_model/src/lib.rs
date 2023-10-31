@@ -21,6 +21,7 @@ pub fn get_models_from_dir(
                     && file_name
                         .strip_suffix(".xml")
                         .unwrap() //can unwrap because previous condition checks for .xml
+                        .replace(&['-', '_'][..], "")
                         .chars()
                         .all(char::is_numeric)
                 {
@@ -305,6 +306,10 @@ mod tests {
     #[test]
     fn parse_all() {
         let directory_path = "lwm2m-registry";
+        let result = super::get_models_from_dir(&PathBuf::from(directory_path));
+        assert!(result.is_ok());
+
+        let directory_path = "lwm2m-registry/version_history";
         let result = super::get_models_from_dir(&PathBuf::from(directory_path));
         assert!(result.is_ok());
         // for (key, value) in result.unwrap() {
