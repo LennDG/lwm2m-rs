@@ -1,7 +1,8 @@
 use chrono::prelude::*;
-use object_model;
+use coap_lite::link_format;
+use object_model::ObjectModel;
 use rand::{distributions::Alphanumeric, Rng};
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 mod registration_tracker;
 
@@ -10,6 +11,7 @@ use crate::lwm2m_requests::registration_request::{
 };
 
 pub struct Device {
+    models: HashMap<u16, ObjectModel>,
     device_endpoint: String,
     server_endpoint: String,
     lifetime: Duration,
@@ -19,6 +21,7 @@ pub struct Device {
 impl Device {
     pub fn new(new_reg: Lwm2mRegistrationRequest) -> Self {
         Self {
+            models: HashMap::new(),
             last_seen: Utc::now(),
             device_endpoint: new_reg.device_endpoint,
             lifetime: Duration::from_secs(new_reg.lifetime),

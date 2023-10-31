@@ -7,6 +7,25 @@ use walkdir::WalkDir;
 mod display;
 mod err;
 
+pub enum Model {
+    Object(ObjectModel),
+    Resource(ResourceModel),
+}
+
+pub struct CoreLink {
+    link: String,
+}
+
+impl CoreLink {
+    pub fn new(link: String) -> Self {
+        todo!() // parse the link to check if it is valid CoreLink
+    }
+}
+
+pub fn get_model(core_link: CoreLink) -> Model {
+    todo!(); // Get the Model of this core_link
+}
+
 /// Returns a hashmap with objectmodels sorted by IDs and versions. Will return an error if a single object fails
 /// This function is meant for well known models (e.g. from the lwm2m registry) that strictly follow the xsd.
 /// Use ... for user provided models.
