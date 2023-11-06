@@ -144,21 +144,9 @@ impl fmt::Display for crate::Version {
 }
 
 fn add_tab_to_lines(input: String) -> String {
-    let mut result = String::with_capacity(input.len());
-    let mut start_of_line = true;
-
-    for c in input.chars() {
-        if start_of_line {
-            result.push('\t');
-            start_of_line = false;
-        }
-
-        result.push(c);
-
-        if c == '\n' {
-            start_of_line = true;
-        }
-    }
-
-    result
+    input
+        .lines()
+        .map(|line| format!("\t{}", line))
+        .collect::<Vec<String>>()
+        .join("\n")
 }
