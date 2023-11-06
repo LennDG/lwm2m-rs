@@ -35,7 +35,7 @@ Contributions are welcome! This is my first Rust project and as such the code mi
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://chat.openai.com/c/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Authors
 
