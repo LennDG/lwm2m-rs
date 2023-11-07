@@ -30,8 +30,8 @@ impl Lwm2mAttribute {
         let (attr, u) = value;
         let attr_value = u.to_string();
         match attr {
-            "dim" => parse_u64_attribute(attr, attr_value, "Dimension"),
-            "ssid" => parse_u64_attribute(attr, attr_value, "Short Server ID (SSID)"),
+            "dim" => parse_u64_attribute(attr, &attr_value, "Dimension"),
+            "ssid" => parse_u64_attribute(attr, &attr_value, "Short Server ID (SSID)"),
             "uri" => Ok(Lwm2mAttribute::Uri(attr_value)),
             "ver" => Ok(Lwm2mAttribute::ObjectVersion(attr_value)),
             "lwm2m" => serde_plain::from_str(attr_value.as_str())
@@ -42,26 +42,26 @@ impl Lwm2mAttribute {
                         message: format!("LWM2M Version {} is not supported.", attr_value),
                     })
                 }),
-            "pmin" => parse_u64_attribute(attr, attr_value, "Minimum Period"),
-            "pmax" => parse_u64_attribute(attr, attr_value, "Maximum Period"),
-            "gt" => parse_f64_attribute(attr, attr_value, "Greater Than"),
-            "lt" => parse_f64_attribute(attr, attr_value, "Less Than"),
-            "st" => parse_f64_attribute(attr, attr_value, "Step"),
-            "epmin" => parse_u64_attribute(attr, attr_value, "Minimum Evaluation Period"),
-            "epmax" => parse_u64_attribute(attr, attr_value, "Maximum Evaluation Period"),
+            "pmin" => parse_u64_attribute(attr, &attr_value, "Minimum Period"),
+            "pmax" => parse_u64_attribute(attr, &attr_value, "Maximum Period"),
+            "gt" => parse_f64_attribute(attr, &attr_value, "Greater Than"),
+            "lt" => parse_f64_attribute(attr, &attr_value, "Less Than"),
+            "st" => parse_f64_attribute(attr, &attr_value, "Step"),
+            "epmin" => parse_u64_attribute(attr, &attr_value, "Minimum Evaluation Period"),
+            "epmax" => parse_u64_attribute(attr, &attr_value, "Maximum Evaluation Period"),
             "edge" => parse_bool_attribute(
-                attr_value,
+                &attr_value,
                 "Edge",
                 Lwm2mAttribute::Edge(true),
                 Lwm2mAttribute::Edge(false),
             ),
             "con" => parse_bool_attribute(
-                attr_value,
+                &attr_value,
                 "Confirmable Notification",
                 Lwm2mAttribute::Confirmable(true),
                 Lwm2mAttribute::Confirmable(false),
             ),
-            "hqmax" => parse_u64_attribute(attr, attr_value, "Maximum Historical Queue"),
+            "hqmax" => parse_u64_attribute(attr, &attr_value, "Maximum Historical Queue"),
             "ct" => {
                 let ct = attr_value.parse::<usize>().map_err(|_| CoapError {
                     code: Some(coap_lite::ResponseType::NotAcceptable),
@@ -80,7 +80,7 @@ impl Lwm2mAttribute {
 
 fn parse_f64_attribute(
     attr_name: &str,
-    attr_value: String,
+    attr_value: &str,
     error_message: &str,
 ) -> Result<Lwm2mAttribute, CoapError> {
     match attr_value.parse::<f64>() {
@@ -110,7 +110,7 @@ fn parse_f64_attribute(
 
 fn parse_u64_attribute(
     attr_name: &str,
-    attr_value: String,
+    attr_value: &str,
     error_message: &str,
 ) -> Result<Lwm2mAttribute, CoapError> {
     match attr_value.parse::<u64>() {
@@ -143,7 +143,7 @@ fn parse_u64_attribute(
 }
 
 fn parse_bool_attribute(
-    attr_value: String,
+    attr_value: &str,
     error_message: &str,
     true_variant: Lwm2mAttribute,
     false_variant: Lwm2mAttribute,
