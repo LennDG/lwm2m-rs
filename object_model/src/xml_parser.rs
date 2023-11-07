@@ -64,8 +64,14 @@ pub fn get_models_from_dir(
 
 fn parse_model(filepath: &PathBuf) -> Result<ObjectModel, ObjectParserError> {
     let object_model = ObjectModelBuilder::default();
-    let txt = std::fs::read_to_string(filepath).unwrap();
-    let doc = Document::parse(txt.as_str()).unwrap();
+    let txt = std::fs::read_to_string(filepath).map_err(|err| {
+        ObjectParserError::new(&format!(
+            "Could not read from filepath {}: {}",
+            filepath.to_string_lossy(),
+            err
+        ))
+    })?;
+    let doc = Document::parse(&txt).map_err(|err| ObjectParserError::new(&err.to_string()))?;
     if let Some(object_node) = doc
         .descendants()
         .find(|node| node.tag_name().name() == "Object")
@@ -120,13 +126,10 @@ fn parse_object(
             "MultipleInstances" => match child.text() {
                 Some("Multiple") => Ok(object_model.multiple(true)),
                 Some("Single") => Ok(object_model.multiple(false)),
-                Some(value) => Err(ObjectParserError::new(
-                    format!(
-                        "MultipleInstances needs to be Multiple or Single, is: {}",
-                        value
-                    )
-                    .as_str(),
-                )),
+                Some(value) => Err(ObjectParserError::new(&format!(
+                    "MultipleInstances needs to be Multiple or Single, is: {}",
+                    value
+                ))),
                 None => Err(ObjectParserError::new(
                     "MultipleInstances needs to be Multiple or Single, is empty",
                 )),
@@ -134,9 +137,10 @@ fn parse_object(
             "Mandatory" => match child.text() {
                 Some("Mandatory") => Ok(object_model.mandatory(true)),
                 Some("Optional") => Ok(object_model.mandatory(false)),
-                Some(value) => Err(ObjectParserError::new(
-                    format!("Mandatory needs to be Mandatory or Optional, is: {}", value).as_str(),
-                )),
+                Some(value) => Err(ObjectParserError::new(&format!(
+                    "Mandatory needs to be Mandatory or Optional, is: {}",
+                    value
+                ))),
                 None => Err(ObjectParserError::new(
                     "Mandatory needs to be Mandatory or Optional, is empty",
                 )),
@@ -185,18 +189,17 @@ fn parse_resource(
                 Some("") => Ok(resource_model.operations(None)),
                 None => Ok(&mut resource_model),
                 Some(value) => Err(ObjectParserError::new(
-                    format!("Operations needs to be R, W, RW, E or empty, is: {}", value).as_str(),
+                    &format!("Operations needs to be R, W, RW, E or empty, is: {}", value),
                 )),
             },
             "MultipleInstances" => match child.text() {
                 Some("Multiple") => Ok(resource_model.multiple(true)),
                 Some("Single") => Ok(resource_model.multiple(false)),
                 Some(value) => Err(ObjectParserError::new(
-                    format!(
+                    &format!(
                         "MultipleInstances needs to be Multiple or Single, is: {}",
                         value
-                    )
-                    .as_str(),
+                    ),
                 )),
                 None => Err(ObjectParserError::new(
                     "MultipleInstances needs to be Multiple or Single, is empty",
@@ -206,7 +209,7 @@ fn parse_resource(
                 Some("Mandatory") => Ok(resource_model.mandatory(true)),
                 Some("Optional") => Ok(resource_model.mandatory(false)),
                 Some(value) => Err(ObjectParserError::new(
-                    format!("Mandatory needs to be Mandatory or Optional, is: {}", value).as_str(),
+                    &format!("Mandatory needs to be Mandatory or Optional, is: {}", value),
                 )),
                 None => Err(ObjectParserError::new(
                     "Mandatory needs to be Mandatory or Optional, is empty",
@@ -224,7 +227,7 @@ fn parse_resource(
                 Some("Corelnk") => Ok(resource_model.resourcetype(Some(ResourceType::CoreLink(None)))),
                 None => Ok(&mut resource_model),
                 Some(value) => Err(ObjectParserError::new(
-                    format!("Resource Type can be String, Integer, Float, Boolean, Opaque, Time, Objlnk or empty, is: {}", value).as_str(),
+                    &format!("Resource Type can be String, Integer, Float, Boolean, Opaque, Time, Objlnk or empty, is: {}", value),
                 )),
             },
             "Description" => match child.text() {

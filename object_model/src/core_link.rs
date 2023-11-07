@@ -50,9 +50,10 @@ impl TryFrom<String> for CoreLink {
 
 fn parse_id(index: usize, id: &str) -> Result<u16, ObjectParserError> {
     id.parse().map_err(|err| {
-        ObjectParserError::new(
-            format!("CoRE link index {}, value {} is not a u16", index, id,).as_str(),
-        )
+        ObjectParserError::new(&format!(
+            "CoRE link index {}, value {} is not a u16",
+            index, id,
+        ))
     })
 }
 #[cfg(test)]
