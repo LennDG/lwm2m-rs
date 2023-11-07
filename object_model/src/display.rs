@@ -143,6 +143,18 @@ impl fmt::Display for crate::Version {
     }
 }
 
+impl fmt::Display for crate::core_link::CoreLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.link)
+    }
+}
+
+impl fmt::Display for crate::object_link::ObjectLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.link)
+    }
+}
+
 fn add_tab_to_lines(input: String) -> String {
     input
         .lines()
