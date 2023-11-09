@@ -22,15 +22,9 @@ impl fmt::Display for crate::ObjectModel {
             Some(v) => v,
         };
 
-        let object_version = match self.version.clone() {
-            None => "1.0".to_string(),
-            Some(v) => v,
-        };
+        let object_version = self.version.clone();
 
-        let lwm2m_version = match self.version.clone() {
-            None => "latest".to_string(),
-            Some(v) => v,
-        };
+        let lwm2m_version = self.version.clone();
 
         let mut resources = "".to_string();
         for (key, value) in self.resources.clone() {
@@ -143,22 +137,28 @@ impl fmt::Display for crate::ResourceRange {
     }
 }
 
-fn add_tab_to_lines(input: String) -> String {
-    let mut result = String::with_capacity(input.len());
-    let mut start_of_line = true;
-
-    for c in input.chars() {
-        if start_of_line {
-            result.push('\t');
-            start_of_line = false;
-        }
-
-        result.push(c);
-
-        if c == '\n' {
-            start_of_line = true;
-        }
+impl fmt::Display for crate::Version {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.oma_version)
     }
+}
 
-    result
+impl fmt::Display for crate::core_link::CoreLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.link)
+    }
+}
+
+impl fmt::Display for crate::object_link::ObjectLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.link)
+    }
+}
+
+fn add_tab_to_lines(input: String) -> String {
+    input
+        .lines()
+        .map(|line| format!("\t{}", line))
+        .collect::<Vec<String>>()
+        .join("\n")
 }

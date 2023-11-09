@@ -14,4 +14,5 @@ serde_plain = "1.0.2"
 tokio = { version = "1.29", features = ["full"]}
 rand = "0.8.5"
 chrono = "0.4.31"
+object_model = {path = "../object_model"}
 
