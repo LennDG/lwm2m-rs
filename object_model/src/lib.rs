@@ -4,10 +4,10 @@ use object_link::ObjectLink;
 use std::path::Path;
 use std::{collections::HashMap, hash::Hash};
 
-mod core_link;
+pub mod core_link;
 mod display;
 mod err;
-mod object_link;
+pub mod object_link;
 mod xml_parser;
 
 pub enum Model {
@@ -185,15 +185,22 @@ mod tests {
 
     #[test]
     fn test_get_object_model() {
-        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
-        assert!(object_model_store.is_ok());
-        let object_model = object_model_store
-            .unwrap()
-            .get_model(CoreLink::try_from("</3>").unwrap(), None);
+        let object_model_store =
+            ObjectModelStore::new(Path::new("lwm2m-registry/version_history")).unwrap();
+        let object_model = object_model_store.get_model(CoreLink::try_from("</3>").unwrap(), None);
         assert!(object_model.is_ok());
         if let Ok(Model::Object(object_model)) = object_model {
             assert_eq!(object_model.id, 3);
             assert_eq!(object_model.name, "Device".to_string());
+            assert_eq!(object_model.version, Version::default());
+        }
+
+        let object_model =
+            object_model_store.get_model(CoreLink::try_from("</18831>").unwrap(), None);
+        assert!(object_model.is_ok());
+        if let Ok(Model::Object(object_model)) = object_model {
+            assert_eq!(object_model.id, 18831);
+            assert_eq!(object_model.name, "MQTT Publication".to_string());
             assert_eq!(object_model.version, Version::default());
         }
     }
@@ -216,10 +223,10 @@ mod tests {
 
     #[test]
     fn test_get_resource_model() {
-        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
-        assert!(object_model_store.is_ok());
+        let object_model_store =
+            ObjectModelStore::new(Path::new("lwm2m-registry/version_history")).unwrap();
         let version = Version::try_from("1.2").unwrap();
-        let resource_model = object_model_store.unwrap().get_model(
+        let resource_model = object_model_store.get_model(
             CoreLink::try_from("</3/0/0>").unwrap(),
             Some(version.clone()),
         );
@@ -227,6 +234,14 @@ mod tests {
         if let Ok(Model::Resource(resource_model)) = resource_model {
             assert_eq!(resource_model.id, 0);
             assert_eq!(resource_model.name, "Manufacturer".to_string());
+        }
+
+        let resource_model =
+            object_model_store.get_model(CoreLink::try_from("</3300/0/5700>").unwrap(), None);
+        assert!(resource_model.is_ok());
+        if let Ok(Model::Resource(resource_model)) = resource_model {
+            assert_eq!(resource_model.id, 5700);
+            assert_eq!(resource_model.name, "Sensor Value".to_string());
         }
     }
 }
