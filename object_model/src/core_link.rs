@@ -9,12 +9,6 @@ pub struct CoreLink {
     pub resource_instance: Option<u16>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum ModelType {
-    Object,
-    Resource,
-}
-
 // CoRELink looks like </1/0/0>
 impl TryFrom<&str> for CoreLink {
     type Error = ObjectParserError;
@@ -54,7 +48,7 @@ impl TryFrom<&str> for CoreLink {
 }
 
 fn parse_id(index: usize, id: &str) -> Result<u16, ObjectParserError> {
-    id.parse().map_err(|err| {
+    id.parse().map_err(|_| {
         ObjectParserError::new(&format!(
             "CoRE link index {}, value {} is not a u16",
             index, id,

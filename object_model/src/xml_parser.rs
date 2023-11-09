@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 use crate::err::ObjectParserError;
 use crate::*;
 use roxmltree::{Document, Node};
@@ -265,7 +264,7 @@ mod tests {
         let directory_path = "lwm2m-registry/version_history";
         let result = super::get_models_from_dir(&PathBuf::from(directory_path));
         assert!(result.is_ok());
-        for (key, value) in result.unwrap() {
+        for (_, value) in result.unwrap() {
             if value.versions.keys().len() > 1 {
                 for (version, model) in value.versions {
                     println!("{}", version);

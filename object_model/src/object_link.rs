@@ -32,10 +32,11 @@ impl TryFrom<String> for ObjectLink {
 }
 
 fn parse_id(index: usize, id: &str) -> Result<u16, ObjectParserError> {
-    id.parse().map_err(|err| {
-        ObjectParserError::new(
-            format!("Object Link index {}, value {} is not a u16", index, id,).as_str(),
-        )
+    id.parse().map_err(|_| {
+        ObjectParserError::new(&format!(
+            "Object Link index {}, value {} is not a u16",
+            index, id,
+        ))
     })
 }
 

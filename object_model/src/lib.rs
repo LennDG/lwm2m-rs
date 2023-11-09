@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 use core_link::CoreLink;
 use err::{ModelNotFoundError, ObjectParserError};
 use object_link::ObjectLink;

@@ -24,10 +24,10 @@ impl fmt::Display for crate::ObjectModel {
 
         let object_version = self.version.clone();
 
-        let lwm2m_version = self.version.clone();
+        let lwm2m_version = self.lwm2m_version.clone();
 
         let mut resources = "".to_string();
-        for (key, value) in self.resources.clone() {
+        for (_, value) in self.resources.clone() {
             resources.push_str(add_tab_to_lines(format!("{}\n", value)).as_str())
         }
 

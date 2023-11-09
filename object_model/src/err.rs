@@ -3,23 +3,6 @@ use std::{error::Error, fmt};
 use crate::{core_link::CoreLink, Version};
 
 #[derive(Debug)]
-pub enum ObjectModelError {
-    Parser(String),
-    NotFound(String),
-}
-
-impl fmt::Display for ObjectModelError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ObjectModelError::Parser(message) => write!(f, "{}", message),
-            ObjectModelError::NotFound(message) => write!(f, "{}", message),
-        }
-    }
-}
-
-impl std::error::Error for ObjectModelError {}
-
-#[derive(Debug)]
 pub struct ObjectParserError {
     message: String,
 }
