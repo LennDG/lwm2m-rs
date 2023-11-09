@@ -21,8 +21,14 @@ pub struct ObjectModelStore {
 }
 
 impl ObjectModelStore {
-    pub fn init_models_from_dir(&mut self, path: &Path) -> Result<(), ObjectParserError> {
-        self.models = xml_parser::get_models_from_dir(path)?;
+    pub fn new(path: &Path) -> Result<Self, ObjectParserError> {
+        let models = xml_parser::get_models_from_dir(path)?;
+        Ok(ObjectModelStore { models })
+    }
+
+    pub fn add_models_from_dir(&mut self, path: &Path) -> Result<(), ObjectParserError> {
+        let new_models = xml_parser::get_models_from_dir(path)?;
+        self.models.extend(new_models);
         Ok(())
     }
 
@@ -34,24 +40,34 @@ impl ObjectModelStore {
         let object_model = self
             .models
             .get(&link.object_id)
-            .ok_or(ModelNotFoundError::IdNotFound(link.clone()))?;
+            .ok_or(ModelNotFoundError::ObjectId(link.clone()))?;
 
-        let versioned_object_model = match version {
-            Some(version) => {
-                object_model
-                    .versions
-                    .get(&version)
-                    .ok_or(ModelNotFoundError::VersionNotFound {
-                        version: version.clone(),
+        let versioned_object_model =
+            match version {
+                Some(version) => {
+                    object_model
+                        .versions
+                        .get(&version)
+                        .ok_or(ModelNotFoundError::Version {
+                            version: version.clone(),
+                            link: link.clone(),
+                        })
+                }
+                None => object_model.versions.get(&Version::default()).ok_or(
+                    ModelNotFoundError::Version {
+                        version: Version::default(),
                         link: link.clone(),
-                    })
-            }
-            None => todo!(),
-        }?;
+                    },
+                ),
+            }?;
 
-        match link.model_type {
-            core_link::ModelType::Object => todo!(),
-            core_link::ModelType::Resource => todo!(),
+        match link.resource_id {
+            None => Ok(Model::Object(versioned_object_model.clone())),
+            Some(id) => versioned_object_model
+                .resources
+                .get(&id)
+                .ok_or(ModelNotFoundError::ResourceId(link))
+                .map(|model| Model::Resource(model.clone())),
         }
     }
 }
@@ -71,9 +87,9 @@ pub struct ObjectModel {
     description: Option<String>,
     #[builder(default = "None")]
     description2: Option<String>,
-    #[builder(default = "Default::default()")]
+    #[builder(default = "Version::default()")]
     version: Version,
-    #[builder(default = "Default::default()")]
+    #[builder(default = "Version::default()")]
     lwm2m_version: Version,
     urn: String,
     multiple: bool,
@@ -154,8 +170,64 @@ impl TryFrom<&str> for Version {
 }
 impl Default for Version {
     fn default() -> Self {
-        Self {
-            oma_version: String::from("1.0"),
+        Version::try_from("1.0").unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_model_store() {
+        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
+        assert!(object_model_store.is_ok());
+    }
+
+    #[test]
+    fn test_get_object_model() {
+        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
+        assert!(object_model_store.is_ok());
+        let object_model = object_model_store
+            .unwrap()
+            .get_model(CoreLink::try_from("</3>").unwrap(), None);
+        assert!(object_model.is_ok());
+        if let Ok(Model::Object(object_model)) = object_model {
+            assert_eq!(object_model.id, 3);
+            assert_eq!(object_model.name, "Device".to_string());
+            assert_eq!(object_model.version, Version::default());
+        }
+    }
+
+    #[test]
+    fn test_get_versioned_object_model() {
+        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
+        assert!(object_model_store.is_ok());
+        let version = Version::try_from("1.2").unwrap();
+        let object_model = object_model_store
+            .unwrap()
+            .get_model(CoreLink::try_from("</3>").unwrap(), Some(version.clone()));
+        assert!(object_model.is_ok());
+        if let Ok(Model::Object(object_model)) = object_model {
+            assert_eq!(object_model.id, 3);
+            assert_eq!(object_model.name, "Device".to_string());
+            assert_eq!(object_model.version, version)
+        }
+    }
+
+    #[test]
+    fn test_get_resource_model() {
+        let object_model_store = ObjectModelStore::new(Path::new("lwm2m-registry/version_history"));
+        assert!(object_model_store.is_ok());
+        let version = Version::try_from("1.2").unwrap();
+        let resource_model = object_model_store.unwrap().get_model(
+            CoreLink::try_from("</3/0/0>").unwrap(),
+            Some(version.clone()),
+        );
+        assert!(resource_model.is_ok());
+        if let Ok(Model::Resource(resource_model)) = resource_model {
+            assert_eq!(resource_model.id, 0);
+            assert_eq!(resource_model.name, "Manufacturer".to_string());
         }
     }
 }

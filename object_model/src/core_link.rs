@@ -16,19 +16,30 @@ pub enum ModelType {
     Resource,
 }
 
-impl TryFrom<String> for CoreLink {
+// CoRELink looks like </1/0/0>
+impl TryFrom<&str> for CoreLink {
     type Error = ObjectParserError;
 
-    fn try_from(link: String) -> Result<Self, Self::Error> {
+    fn try_from(link: &str) -> Result<Self, Self::Error> {
+        use regex::Regex;
+        let re = Regex::new(r"^<(\/[\d]+){1,4}>$").unwrap();
+        if !re.is_match(link) {
+            Err(ObjectParserError::new("LwM2M CoRE link is not valid"))?;
+        }
+
         let mut core_link = CoreLink {
-            link: link.clone(),
+            link: link.to_owned(),
             object_id: 0,
             object_instance: None,
             resource_id: None,
             resource_instance: None,
             model_type: ModelType::Object,
         };
-        for (index, id) in link.clone().split('/').enumerate() {
+
+        for (index, id) in link.clone().replace(['<', '>'], "")[1..]
+            .split('/')
+            .enumerate()
+        {
             match index {
                 0 => parse_id(index, id).map(|value| core_link.object_id = value),
                 1 => parse_id(index, id).map(|value| core_link.object_instance = Some(value)),
@@ -62,8 +73,7 @@ mod tests {
 
     #[test]
     fn test_try_from_valid_string() {
-        let link = "3/1/3/0".to_string();
-        let core_link = CoreLink::try_from(link);
+        let core_link = CoreLink::try_from("</3/1/3/0>");
         assert!(core_link.is_ok());
         if let Ok(core_link) = core_link {
             assert_eq!(core_link.object_id, 3);
@@ -76,8 +86,7 @@ mod tests {
 
     #[test]
     fn test_try_from_valid_string2() {
-        let link = "3/1".to_string();
-        let core_link = CoreLink::try_from(link);
+        let core_link = CoreLink::try_from("</3/1>");
         assert!(core_link.is_ok());
         if let Ok(core_link) = core_link {
             assert_eq!(core_link.object_id, 3);
@@ -89,23 +98,33 @@ mod tests {
     }
 
     #[test]
+    fn test_try_from_valid_string3() {
+        let core_link = CoreLink::try_from("</3>");
+        assert!(core_link.is_ok());
+        if let Ok(core_link) = core_link {
+            assert_eq!(core_link.object_id, 3);
+            assert_eq!(core_link.object_instance, None);
+            assert_eq!(core_link.resource_id, None);
+            assert_eq!(core_link.resource_instance, None);
+            assert_eq!(core_link.model_type, ModelType::Object);
+        }
+    }
+
+    #[test]
     fn test_try_from_invalid_string() {
-        let link = "a/2/b".to_string();
-        let core_link = CoreLink::try_from(link);
+        let core_link = CoreLink::try_from("</a/2/b>");
         assert!(core_link.is_err());
     }
 
     #[test]
     fn test_try_from_invalid_string2() {
-        let link = "hello".to_string();
-        let core_link = CoreLink::try_from(link);
+        let core_link = CoreLink::try_from("hello");
         assert!(core_link.is_err());
     }
 
     #[test]
     fn test_try_from_too_many_elements() {
-        let link = "1/2/3/4/5".to_string();
-        let core_link = CoreLink::try_from(link);
+        let core_link = CoreLink::try_from("</1/2/3/4/5>");
         assert!(core_link.is_err());
     }
 }

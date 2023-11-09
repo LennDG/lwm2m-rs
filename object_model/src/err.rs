@@ -42,17 +42,29 @@ impl Error for ObjectParserError {}
 
 #[derive(Debug)]
 pub enum ModelNotFoundError {
-    IdNotFound(CoreLink),
-    VersionNotFound { version: Version, link: CoreLink },
+    ObjectId(CoreLink),
+    ResourceId(CoreLink),
+    Version { version: Version, link: CoreLink },
 }
 
 impl fmt::Display for ModelNotFoundError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            ModelNotFoundError::IdNotFound(link) => {
-                write!(f, "Model for link {} was not found in model registry", link)
+            ModelNotFoundError::ObjectId(link) => {
+                write!(
+                    f,
+                    "Object model for link {} was not found in model registry",
+                    link
+                )
             }
-            ModelNotFoundError::VersionNotFound { version, link } => {
+            ModelNotFoundError::ResourceId(link) => {
+                write!(
+                    f,
+                    "Resource model for link {} was not found in model registry",
+                    link
+                )
+            }
+            ModelNotFoundError::Version { version, link } => {
                 write!(
                     f,
                     "Object version {} for link {} was not found in model registry",
