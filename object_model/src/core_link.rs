@@ -7,7 +7,6 @@ pub struct CoreLink {
     pub object_instance: Option<u16>,
     pub resource_id: Option<u16>,
     pub resource_instance: Option<u16>,
-    pub model_type: ModelType,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -33,7 +32,6 @@ impl TryFrom<&str> for CoreLink {
             object_instance: None,
             resource_id: None,
             resource_instance: None,
-            model_type: ModelType::Object,
         };
 
         for (index, id) in link.clone().replace(['<', '>'], "")[1..]
@@ -49,10 +47,6 @@ impl TryFrom<&str> for CoreLink {
                     "LwM2M CoRE link can not have more than 4 elements",
                 )),
             }?;
-        }
-
-        if core_link.resource_id.is_some() {
-            core_link.model_type = ModelType::Resource
         }
 
         Ok(core_link)
@@ -80,7 +74,6 @@ mod tests {
             assert_eq!(core_link.object_instance, Some(1));
             assert_eq!(core_link.resource_id, Some(3));
             assert_eq!(core_link.resource_instance, Some(0));
-            assert_eq!(core_link.model_type, ModelType::Resource);
         }
     }
 
@@ -93,7 +86,6 @@ mod tests {
             assert_eq!(core_link.object_instance, Some(1));
             assert_eq!(core_link.resource_id, None);
             assert_eq!(core_link.resource_instance, None);
-            assert_eq!(core_link.model_type, ModelType::Object);
         }
     }
 
@@ -106,7 +98,6 @@ mod tests {
             assert_eq!(core_link.object_instance, None);
             assert_eq!(core_link.resource_id, None);
             assert_eq!(core_link.resource_instance, None);
-            assert_eq!(core_link.model_type, ModelType::Object);
         }
     }
 
