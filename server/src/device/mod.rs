@@ -3,8 +3,6 @@ use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
 use std::time::Duration;
 
-mod registration_tracker;
-
 use crate::lwm2m_requests::registration_request::{
     Lwm2mRegistrationObject, Lwm2mRegistrationRequest, Lwm2mVersion,
 };
